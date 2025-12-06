@@ -1,0 +1,417 @@
+#include<cstdio>
+#include<iostream>
+#include<sstream>
+#include<bits/stdc++.h>
+using namespace std;
+const int MAX = 50;
+bool change = false;
+struct books{//图书的信息 
+	string book;//书籍名称 
+	string isbn;//书籍编号 
+	bool borrow;//书籍借出状态 
+	string readid;//借书读者 
+};
+books bok[MAX+1];
+struct readers{//读者的信息
+	string id;//读者id 
+	string reader;//读者名称 
+	int mount;//借书数量上线/计数 
+};
+readers red[MAX+1];
+int bcount = 0;//图书 
+int rcount = 0;//读者 
+int findbook(string isbn){//辅助图书查找功能 
+	for(int i=1;i<=bcount;i++){
+		if(bok[i].isbn==isbn){
+			return i;
+		}
+	}
+	return -1;
+}
+int findreader(string id){//辅助读者查找 
+	for(int i=1;i<=rcount;i++){
+		if(red[i].id==id){
+			return i;
+		} 
+	}
+	return -1;
+} 
+void deletebook(){
+	string a;
+	cout<<"请输入需删除图书的ISBN:"<<"\n";
+	cin>>a;
+	if(findbook(a)==-1){
+		cout<<"未有ISBN为"<<a<<"的书籍,已终止操作!"<<"\n";
+		return;
+	}
+	if(findbook(a)!=-1){
+		if(bok[findbook(a)].borrow == true){
+		cout<<"书籍已借出,无法删除!"<<"\n";
+		cout<<"已终止运行操作!"<<"\n";
+		}
+	}
+	for(int i=findbook(a);i<=bcount-1;i++){
+		bok[i] = bok[i+1];
+	} 
+	bcount -= 1;
+	cout<<"已成功删除此书籍!"<<"\n"; 
+	change = true;//记录是否修改
+} 
+void addbook(){//添加书籍 
+	if(bcount==MAX){//判断书籍是否达到上线 
+		cout<<"图书库已满(最多50本),已终止添加!"<<"\n";
+		return; 
+	}
+	string a;
+	string b;
+	cout<<"请输入ISBN的数值!"<<"\n";
+	cin>>b;
+	if(findbook(b)!=-1){//判断是否有相同id
+		cout<<"ISBN重复,已终止添加!"<<"\n"; 
+		return; 
+	}
+	cout<<"请输入图书的名称!"<<"\n";
+	cin>>a;
+	bcount += 1;
+	bok[bcount].borrow = false;//借书状态 
+	bok[bcount].readid = "";//借书人为空字符串 
+	bok[bcount].book = a;//记录书的名字 
+	bok[bcount].isbn = b;//记录书的ISBN 
+	cout<<"添加成功!"<<"\n";
+	change = true;//记录是否修改 
+}
+void showbook(){
+	if(bcount==0){
+		cout<<"当前未有可查询图书,请前往添加!"<<"\n";
+		return; 
+	}
+	cout<<"图书列表:"<<"\n";
+	for(int i=1;i<=bcount;i++){
+		if(bok[i].borrow==true){
+			cout<<"ISBN:"<<bok[i].isbn<<"，书名:"<<bok[i].book<<"，状态:"<<"已借出"<<"，借阅者:"<<bok[i].readid<<"\n"; 
+		}
+		else{
+			cout<<"ISBN:"<<bok[i].isbn<<"，书名:"<<bok[i].book<<"，状态:"<<"未借出"<<"，借阅者:"<<"无"<<"\n";
+		} 
+	}
+} 
+void borrowbook(){
+	string a,b;
+	cout<<"请输入读者ID"<<"\n";
+	cin>>a;
+	cout<<"请输入需借阅书籍的ISBN"<<"\n";
+	cin>>b;
+	if(findreader(a)==-1){
+		cout<<"未有此读者!"<<"\n";
+		return;
+	}
+	if(findbook(b)==-1){
+		cout<<"未有此书籍!"<<"\n";
+		return;
+	}
+	if(red[findreader(a)].mount>=3){
+		cout<<"此读者借阅数量已达上线,无法继续借阅!"<<"\n";
+		return;
+	}
+	if(bok[findbook(b)].borrow==true){
+		cout<<"图书已借出,无法进行此操作!"<<"\n";
+		return;
+	}
+	bok[findbook(b)].borrow = true;
+	bok[findbook(b)].readid = a;
+	red[findreader(a)].mount += 1;
+	cout<<"借阅成功!"<<"\n";
+	change = true;
+}
+void returnbook(){
+	string a;
+	cout<<"请输入书籍的ISBN"<<"\n";
+	cin>>a;
+	if(bok[findbook(a)].borrow!=true){
+		cout<<"图书未借出或不存在!"<<"\n";
+		return; 
+	}
+	string sum = bok[findbook(a)].readid;
+	if(findreader(sum)==-1){
+		cout<<"未找到读者!"<<"\n";
+		return;
+	} 
+	red[findreader(sum)].mount -= 1;
+	bok[findbook(a)].borrow = false;
+	bok[findbook(a)].readid = "";
+	cout<<"归还成功!"<<"\n";
+	change = true;
+}
+void findbook(){
+	string a;
+	cout<<"输入查询书籍的关键字:"<<"\n";
+	cin>>a;
+	bool flag = false;
+	for(int i=1;i<=bcount;i++){
+		if(bok[i].book.find(a)!=string::npos)
+			flag = true;
+	}
+	if(flag==false){
+		cout<<"未有相关书籍,请重新确认!"<<"\n";
+		return; 
+	}
+	else{
+		for(int i=1;i<=bcount;i++){
+		if(bok[i].book.find(a)!=string::npos){
+			if(bok[i].borrow==true){
+				cout<<"ISBN:"<<bok[i].isbn<<" 书名:"<<bok[i].book<<" 状态:已借出"<<"\n"; 
+			}
+			else
+				cout<<"ISBN:"<<bok[i].isbn<<" 书名:"<<bok[i].book<<" 状态:可借"<<"\n"; 	
+			}
+		}
+	}
+}
+void addreader(){
+	if(rcount==MAX){//判断读者是否达到上线 
+		cout<<"读者名额已达上线(最多50人),已终止添加!"<<"\n";
+		return; 
+	}
+	string a;
+	string b;
+	cout<<"请输入读者的id!"<<"\n";
+	cin>>b;
+	if(findreader(b)!=-1){//判断是否有相同id
+		cout<<"已有id为"<<b<<"的读者,已终止添加!"<<"\n"; 
+		return; 
+	}
+	cout<<"请输入读者的名称!"<<"\n";
+	cin>>a;
+	rcount += 1;
+	red[rcount].id = b;//记录读者id 
+	red[rcount].reader = a;//记录名称 
+	red[rcount].mount = 0;//初始借书数量 
+	cout<<"读者添加成功!"<<"\n";
+	change = true;//记录是否修改 
+} 
+void deletereader(){
+	string a;
+	cout<<"请输入需删除读者的id:"<<"\n";
+	cin>>a;
+	if(findreader(a)==-1){
+		cout<<"未找到id为"<<a<<"的读者"<<"\n";
+		return;
+	}
+	if(findreader(a)!=-1){
+		if(red[findreader(a)].mount>0){
+			cout<<"该读者有未归还的书,无法删除信息!";
+			cout<<"已终止该操作!"<<"\n";
+		}
+	}
+	for(int i=findreader(a);i<=rcount-1;i++){
+		red[i] = red[i+1];
+	}
+	rcount -= 1;
+	cout<<"已成功执行该操作!"<<"\n";
+	change = true;
+}
+void showreader(){
+	if(rcount==0){
+		cout<<"当前未有读者,请前往添加!"<<"\n";
+		return; 
+	}
+	cout<<"读者列表:"<<"\n";
+	for(int i=1;i<=rcount;i++){
+		cout<<"ID:"<<red[i].id<<"，姓名:"<<red[i].reader<<"，已借"<<red[i].mount<<"/3本"<<"\n";
+	}
+} 
+void findreader() {
+    string a;
+    cout << "请输入读者ID：" << endl;
+    cin >> a;
+    if (findreader(a) == -1) {
+        cout << "读者不存在！" << "\n";
+        return;
+    }
+    cout << "读者 " << red[findreader(a)].reader << " 当前借阅的图书：" << "\n";
+    bool flag = false;
+    for (int i = 1; i <= bcount; i++) {
+        if (bok[i].readid == red[findreader(a)].id) {
+            cout << bok[i].isbn << " " << bok[i].book << "\n";
+            flag = true;
+        }
+    }
+
+    if (flag!=false) {
+        cout << "该读者未借阅任何图书！" << endl;
+    }
+}
+void savebook(){
+	ofstream file("books.txt");
+	if(!file.is_open()){
+		cout<<"书籍保存失败,未能打开文件!"<<"\n";
+		return;
+	}
+		for(int i=1;i<=bcount;i++){
+			if(bok[i].borrow == true) 
+				file << bok[i].book << " " << "1" << " " << bok[i].isbn << " " << bok[i].readid <<"\n";
+			else
+				file << bok[i].book << " " << "0" << " " << bok[i].isbn << " " << bok[i].readid <<"\n";
+		}
+	file.close();
+	cout<<"书籍已保存!"<<"\n";
+} 
+void savereader(){
+	ofstream file("readers.txt");
+	if(!file.is_open()){
+		cout<<"读者信息保存失败,未能打开文件!"<<"\n";
+		return;
+	}
+		for(int i=1;i<=rcount;i++){
+				file << red[i].id << " " << red[i].reader << " " << red[i].mount<<"\n";
+		}
+	file.close();
+	cout<<"读者信息已保存!"<<"\n";
+} 
+void loadreader(){
+    ifstream file("readers.txt"); 
+    if (!file.is_open()) {
+        cout << "未找到读者文件，将创建新名单！" << endl;
+        return;
+    }
+    readers s;
+    while (file >> s.id >> s.reader >> s.mount) {
+    	rcount++;
+        red[rcount] = s;
+    }
+    file.close();
+    cout << "成功加载 " << rcount << " 条读者信息！" << endl;
+}
+void loadbook() {
+    ifstream fin("books.txt");
+    if (!fin.is_open()) {
+        cout << "未找到图书文件books.txt，未加载图书数据！" << endl;
+        return;
+    }
+    books b;
+    string line;       // 存储整行数据
+    string isBorrowedStr;
+    bcount = 0;       // 重置计数
+    
+    // 清空数组残留数据
+    for (int i = 1; i < MAX; i++) {
+        bok[i].isbn = "";
+        bok[i].book = "";
+        bok[i].borrow = false;
+        bok[i].readid = "";
+    }
+
+    // 按行读取，逐行解析
+    while (getline(fin, line)) { // 读取整行，直到文件末尾
+        // 跳过空行
+        if (line.empty()) continue;
+        
+        // 将整行数据转为字符串流，方便拆分字段
+        istringstream iss(line);
+        // 按空格拆分字段：优先读4列（ISBN 书名 0/1 readid）
+        int fieldCount = 0;
+        string field;
+        while (iss >> field) {
+            switch (fieldCount) {
+                case 0: b.isbn = field; break;       // 第1列：ISBN
+                case 1: b.book = field; break;       // 第2列：书名
+                case 2: isBorrowedStr = field; break;// 第3列：0/1
+                case 3: b.readid = field; break;     // 第4列：借阅者ID
+                default: break; // 多余字段忽略
+            }
+            fieldCount++;
+        }
+        
+        // 至少要有3列数据才有效
+        if (fieldCount >= 3) {
+            b.borrow = (isBorrowedStr == "1");
+            if (bcount < MAX - 1) {
+                bcount++;
+                bok[bcount] = b;
+            } else {
+                cout << "图书数量达上限，跳过后续数据！" << endl;
+                break;
+            }
+        }
+    }
+    fin.close();
+    cout << "成功加载 " << bcount << " 条图书数据！" << endl;
+}
+int main(){
+	int choice;
+	loadreader(); 
+	loadbook(); 
+	do{
+		cout<<"=====图书借阅系统====="<<"\n";
+		cout<<"－－－－－－－－－－﹁"<<"\n";
+		cout<<"    01.添加书籍"<<"\n";
+		cout<<"    02.删除书籍"<<"\n";
+		cout<<"    03.显示书籍"<<"\n";
+		cout<<"    04.书籍借阅"<<"\n";
+		cout<<"    05.书籍归还"<<"\n";
+		cout<<"    06.书籍查询"<<"\n";
+		cout<<"    07.保存书籍"<<"\n";
+		cout<<"    08.添加读者"<<"\n";
+		cout<<"    09.删除读者"<<"\n";
+		cout<<"    10.显示读者"<<"\n";
+		cout<<"    11.查询读者"<<"\n";
+		cout<<"    12.保存读者"<<"\n";
+		cout<<"     0.退出系统"<<"\n";
+		cout<<"﹂－－－－－－－－－－"<<"\n";
+		cout<<"请输入操作数字"<<"\n";
+		cin>>choice;
+		
+		switch(choice){
+			case 1:
+				addbook();
+				break;
+			case 2:
+				deletebook();
+				break;	
+			case 3:
+				showbook();
+				break;
+			case 4:
+				borrowbook();
+				break;
+			case 5:
+				returnbook();
+				break;
+			case 6:
+				findbook();
+				break;
+			case 7:
+				savebook();
+				break;		
+			case 8:
+				addreader();
+				break;
+			case 9:
+				deletereader();
+				break;
+			case 10:
+				showreader();
+				break;
+			case 11:
+				findreader();
+				break;
+			case 12:
+				savereader();
+				break;
+			case 0:
+				char a;
+				if(change==true){
+					cout<<"检测到未保存的数据,是否保存?(y/n):";
+					cin>>a;
+					if(a=='y'||a=='Y'){
+						savereader();
+						savebook();
+						break;
+					}
+				}
+				cout<<"再见!";
+				break;
+		}
+	}while(choice!=0);
+	return 0; 
+}
